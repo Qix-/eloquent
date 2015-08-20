@@ -85,10 +85,13 @@ module.exports = function eloquent(structure) {
 		if (this) {
 			throw new Error('eloquent structures cannot be instantiated directly');
 		}
+
 		var obj = {constructor: constructor};
+
 		if (structure._constructor instanceof Function) {
 			structure._constructor.apply(obj, arguments);
 		}
+
 		return applyPrototype(obj, structure);
 	};
 
