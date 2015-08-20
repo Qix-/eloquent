@@ -17,6 +17,16 @@ var structure = {
 		_getter: function () { this.flag = false; }
 	},
 
+	util: {
+		signalIf: {
+			_method: function (cond) {
+				if (cond) {
+					this.flag = true;
+				}
+			}
+		}
+	}
+
 	emit: {
 		_method: function () {
 			if (this.flag) {
@@ -28,8 +38,11 @@ var structure = {
 
 var Signaler = eloquent(structure);
 
-Signaler().emit().signal.emit().clear.emit().signal.clear.emit().signal.emit();
-// The above line should log 'Signal!' twice.
+Signaler().emit().signal.emit() // emits
+	.clear.emit()
+	.signal.clear.emit()
+	.util.signalIf(5 > 1).emit(); // emits
+// The above statement logs 'Signal!' twice.
 ```
 
 ## License
