@@ -2,6 +2,7 @@
 
 var cloneDeep = require('clone-deep');
 var cloneObject = require('clone-object');
+var check = require('./lib/checks.js');
 
 function assertNoReturn(obj, chain, type, val) {
 	if (!obj.constructor.noThrow && !chain._returns && !chain._dynamic &&
@@ -29,37 +30,25 @@ function applyGetter(obj, root, chain, type, args) {
 }
 
 function resolveGetter(obj, root, chain) {
-	if (chain._method instanceof Function) {
-		if (chain._getter instanceof Function) {
-			throw new Error('cannot define both _getter and _method');
-		}
-
-		if (chain._dynamic && chain._returns !== undefined) {
-			throw new Error('cannot define _returns if _dynamic is true');
-		}
+	if (check.isMethod(chain)) {
+		check.isNotGetter(chain);
+		check.dynamicReturns(chain);
 
 		return function () {
 			return function () {
 				return applyGetter(obj, root, chain, 'method', arguments);
 			};
 		};
-	} else if (chain._getter instanceof Function) {
-		if (chain._dynamic && chain._returns !== undefined) {
-			throw new Error('cannot define _returns if _dynamic is true');
-		}
+	} else if (check.isGetter(chain)) {
+		check.dynamicReturns(chain);
 
 		return function () {
 			return applyGetter(obj, root, chain, 'getter');
 		};
 	}
 
-	if (chain._returns !== undefined) {
-		throw new Error('cannot specify _returns without _getter or _method');
-	}
-
-	if (chain._dynamic !== undefined) {
-		throw new Error('cannot specify _dynamic without _getter or _method');
-	}
+	check.assertNoGetter(chain, '_returns');
+	check.assertNoGetter(chain, '_dynamic');
 
 	return function () {
 		return applyPrototype(obj, chain, root);
