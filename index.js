@@ -4,17 +4,8 @@ var cloneDeep = require('clone-deep');
 var cloneObject = require('clone-object');
 var check = require('./lib/checks.js');
 
-function assertNoReturn(obj, chain, type, val) {
-	if (!obj.constructor.noThrow && !chain._returns && !chain._dynamic &&
-			val !== undefined) {
-		throw new Error(type + ' returned a value');
-	}
-
-	return val;
-}
-
 function applyGetter(obj, root, chain, type, args) {
-	var res = assertNoReturn(obj, chain, type,
+	var res = check.assertNoReturn(obj, chain, type,
 			chain['_' + type].apply(obj, args));
 
 	if (chain._returns) {
