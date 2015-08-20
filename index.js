@@ -4,7 +4,7 @@ var cloneDeep = require('clone-deep');
 var cloneObject = require('clone-object');
 
 function assertNoReturn(obj, chain, type, val) {
-	if (!obj.constructor.noThrow && !chain._returns &&
+	if (!obj.constructor.noThrow && !chain._returns && !chain._dynamic &&
 			val !== undefined) {
 		throw new Error(type + ' returned a value');
 	}
@@ -35,6 +35,10 @@ function applyPrototype(obj, structure, root) {
 					throw new Error('cannot define both _getter and _method: ' + k);
 				}
 
+				if (chain._dynamic && chain._returns !== undefined) {
+					throw new Error('cannot define _returns if _dynamic is true');
+				}
+
 				getter = function () {
 					return function () {
 						var res = assertNoReturn(obj, chain, 'method',
@@ -44,10 +48,19 @@ function applyPrototype(obj, structure, root) {
 							return res;
 						}
 
-						return applyPrototype(obj, chain, root);
+						var newChain = chain;
+						if (chain._dynamic) {
+							newChain = res;
+						}
+
+						return applyPrototype(obj, newChain, root);
 					};
 				};
 			} else if (chain._getter instanceof Function) {
+				if (chain._dynamic && chain._returns !== undefined) {
+					throw new Error('cannot define _returns if _dynamic is true');
+				}
+
 				getter = function () {
 					var res = assertNoReturn(obj, chain, 'getter',
 							chain._getter.call(obj));
@@ -56,11 +69,20 @@ function applyPrototype(obj, structure, root) {
 						return res;
 					}
 
-					return applyPrototype(obj, chain, root);
+					var newChain = chain;
+					if (chain._dynamic) {
+						newChain = res;
+					}
+
+					return applyPrototype(obj, newChain, root);
 				};
 			} else {
 				if (chain._returns !== undefined) {
 					throw new Error('cannot specify _returns without _getter or _method');
+				}
+
+				if (chain._dynamic !== undefined) {
+					throw new Error('cannot specify _dynamic without _getter or _method');
 				}
 
 				getter = function () {

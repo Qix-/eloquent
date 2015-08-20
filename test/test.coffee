@@ -83,3 +83,25 @@ describe 'AddSub', ->
   it 'should not violate namespaces', ->
     (should (AddSub 1).util.add).not.be.ok()
     (should (AddSub 1).double).not.be.ok()
+
+describe 'DynamicProp', ->
+  wrapArray = (arr)->
+    chain = {}
+    (chain[v] = ((v)->-> @a.push v) v) for v in arr
+    return chain
+  structure =
+    _constructor: (@arr)-> @a = []
+    util:
+      _dynamic: yes
+      _getter: -> wrapArray @arr
+
+  DynamicProp = eloquent structure
+  DynamicProp.noThrow = true # coffee-script returns by default
+
+  it 'should gracefully handle empty dynamic chains', ->
+    (should (DynamicProp []).util.util.util).be.ok()
+
+  it 'should dynamically list properties', ->
+    (should (DynamicProp ['foo']).util.foo).be.ok()
+    (should (DynamicProp ['qux', 'qix']).util.qux).be.ok()
+    (should (DynamicProp ['qux', 'qix']).util.qux.util.qix).be.ok()
