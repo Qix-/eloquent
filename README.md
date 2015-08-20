@@ -25,7 +25,7 @@ var structure = {
 				}
 			}
 		}
-	}
+	},
 
 	hasFlag: {
 		_returns: true, /* the method should not be wrapped */
@@ -57,6 +57,9 @@ Signaler().emit().signal.emit() // emits
 	.signal.clear.emit()
 	.util.signalIf(5 > 1).emit(); // emits
 // The above statement logs 'Signal!' twice.
+
+console.log(Signaler().signal.hasFlag()); //-> true
+console.log(Signaler().util.signalIf(true).status); //-> true
 ```
 
 ## License
