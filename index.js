@@ -12,6 +12,22 @@ function assertNoReturn(obj, chain, type, val) {
 	return val;
 }
 
+function applyGetter(obj, root, chain, type, args) {
+	var res = assertNoReturn(obj, chain, type,
+			chain['_' + type].apply(obj, args));
+
+	if (chain._returns) {
+		return res;
+	}
+
+	var newChain = chain;
+	if (chain._dynamic) {
+		newChain = res;
+	}
+
+	return applyPrototype(obj, newChain, root);
+}
+
 function resolveGetter(obj, root, chain) {
 	if (chain._method instanceof Function) {
 		if (chain._getter instanceof Function) {
@@ -24,19 +40,7 @@ function resolveGetter(obj, root, chain) {
 
 		return function () {
 			return function () {
-				var res = assertNoReturn(obj, chain, 'method',
-						chain._method.apply(obj, arguments));
-
-				if (chain._returns) {
-					return res;
-				}
-
-				var newChain = chain;
-				if (chain._dynamic) {
-					newChain = res;
-				}
-
-				return applyPrototype(obj, newChain, root);
+				return applyGetter(obj, root, chain, 'method', arguments);
 			};
 		};
 	} else if (chain._getter instanceof Function) {
@@ -45,19 +49,7 @@ function resolveGetter(obj, root, chain) {
 		}
 
 		return function () {
-			var res = assertNoReturn(obj, chain, 'getter',
-					chain._getter.call(obj));
-
-			if (chain._returns) {
-				return res;
-			}
-
-			var newChain = chain;
-			if (chain._dynamic) {
-				newChain = res;
-			}
-
-			return applyPrototype(obj, newChain, root);
+			return applyGetter(obj, root, chain, 'getter');
 		};
 	}
 
