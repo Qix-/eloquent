@@ -3,7 +3,7 @@
 
 ## Example
 
-```coffeescript
+```javascript
 var eloquent = require('eloquent');
 
 var structure = {
