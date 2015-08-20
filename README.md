@@ -27,6 +27,20 @@ var structure = {
 		}
 	}
 
+	hasFlag: {
+		_returns: true, /* the method should not be wrapped */
+		_method: function () {
+			return !!this.flag;
+		}
+	},
+
+	status: {
+		_returns: true, /* the getter should not be wrapped */
+		_getter: function () {
+			return !!this.flag;
+		}
+	},
+
 	emit: {
 		_method: function () {
 			if (this.flag) {
