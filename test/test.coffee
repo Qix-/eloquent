@@ -1,0 +1,85 @@
+eloquent = require '../'
+should = require 'should'
+
+Error.stackTraceLimit = Infinity
+
+describe 'AddSub', ->
+  structure =
+    _constructor: (n)-> @n = n
+    add:
+      _method: (n)-> @n += n
+    inc:
+      _getter: -> ++@n
+    sub:
+      _method: (n)-> @n -= n
+    dec:
+      _getter: -> --@n
+    base:
+      _method: (b)-> @n.toString b || 10
+      _returns: yes
+    util:
+      double:
+        _getter: -> @n *= 2
+
+  AddSub = eloquent structure
+  AddSub.noThrow = true # coffee-script returns by default
+
+  it 'should have created the class', ->
+    (should AddSub).be.ok().and.a.Function()
+
+  it 'should create objects without `new`', ->
+    (should AddSub 1).be.ok()
+    (AddSub 42).n.should.equal 42
+
+  it 'should not allow instantiation (via `new`)', ->
+    (->
+      new AddSub 42
+    ).should.throw 'eloquent structures cannot be instantiated directly'
+
+  it 'should have no-constructor functionality', ->
+    (should (eloquent {})()).be.ok()
+
+  it 'should have basic constructor functionality', ->
+    (AddSub 1).n.should.equal 1
+
+  it 'should add', ->
+    n = AddSub 1
+    (AddSub 1).add(15).n.should.equal 16
+    (AddSub 1).add(15).add(84).n.should.equal 100
+
+  it 'should subtract', ->
+    n = AddSub 1
+    (AddSub 1).sub(15).n.should.equal -14
+    (AddSub 1).sub(15).sub(84).n.should.equal -98
+
+  it 'should increment', ->
+    (AddSub 0).inc.n.should.equal 1
+    (AddSub 1).inc.inc.n.should.equal 3
+    (AddSub 15).inc.inc.inc.n.should.equal 18
+
+  it 'should decrement', ->
+    (AddSub 15).dec.n.should.equal 14
+    (AddSub 10).dec.dec.n.should.equal 8
+    (AddSub 20).dec.dec.dec.n.should.equal 17
+
+  it 'should add and subtract', ->
+    (AddSub 0).inc.dec.inc.dec.n.should.equal 0
+    (AddSub 5).add(15).dec.inc.n.should.equal 20
+    (AddSub 10).inc.sub(10).dec.dec.n.should.equal -1
+    (AddSub 15).add(15).sub(10).inc.inc.dec.n.should.equal 21
+
+  it 'should honor _returns', ->
+    (AddSub 16).base(16).should.equal '10'
+    (AddSub 714).base(32).should.equal 'ma'
+    (AddSub 34377).base(36).should.equal 'qix'
+    (AddSub 5).base().should.equal '5'
+    (should (AddSub 5).base().n).not.be.ok()
+
+  it 'should honor namespaces', ->
+    (AddSub 8).util.n.should.equal 8
+    (AddSub 8).util.double.n.should.equal 16
+    (AddSub 14).util.double.inc.add(4).n.should.equal 33
+
+  it 'should not violate namespaces', ->
+    (should (AddSub 1).util.add).not.be.ok()
+    (should (AddSub 1).double).not.be.ok()
