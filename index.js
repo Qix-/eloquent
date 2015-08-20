@@ -12,6 +12,68 @@ function assertNoReturn(obj, chain, type, val) {
 	return val;
 }
 
+function resolveGetter(obj, root, chain) {
+	if (chain._method instanceof Function) {
+		if (chain._getter instanceof Function) {
+			throw new Error('cannot define both _getter and _method');
+		}
+
+		if (chain._dynamic && chain._returns !== undefined) {
+			throw new Error('cannot define _returns if _dynamic is true');
+		}
+
+		return function () {
+			return function () {
+				var res = assertNoReturn(obj, chain, 'method',
+						chain._method.apply(obj, arguments));
+
+				if (chain._returns) {
+					return res;
+				}
+
+				var newChain = chain;
+				if (chain._dynamic) {
+					newChain = res;
+				}
+
+				return applyPrototype(obj, newChain, root);
+			};
+		};
+	} else if (chain._getter instanceof Function) {
+		if (chain._dynamic && chain._returns !== undefined) {
+			throw new Error('cannot define _returns if _dynamic is true');
+		}
+
+		return function () {
+			var res = assertNoReturn(obj, chain, 'getter',
+					chain._getter.call(obj));
+
+			if (chain._returns) {
+				return res;
+			}
+
+			var newChain = chain;
+			if (chain._dynamic) {
+				newChain = res;
+			}
+
+			return applyPrototype(obj, newChain, root);
+		};
+	}
+
+	if (chain._returns !== undefined) {
+		throw new Error('cannot specify _returns without _getter or _method');
+	}
+
+	if (chain._dynamic !== undefined) {
+		throw new Error('cannot specify _dynamic without _getter or _method');
+	}
+
+	return function () {
+		return applyPrototype(obj, chain, root);
+	};
+}
+
 function applyPrototype(obj, structure, root) {
 	if (!structure) {
 		return obj;
@@ -28,73 +90,12 @@ function applyPrototype(obj, structure, root) {
 		found = true;
 		root = root || structure;
 
-		(function (k, chain) {
-			var getter;
-			if (chain._method instanceof Function) {
-				if (chain._getter instanceof Function) {
-					throw new Error('cannot define both _getter and _method: ' + k);
-				}
+		var getter = resolveGetter(obj, root, structure[k]);
 
-				if (chain._dynamic && chain._returns !== undefined) {
-					throw new Error('cannot define _returns if _dynamic is true');
-				}
-
-				getter = function () {
-					return function () {
-						var res = assertNoReturn(obj, chain, 'method',
-								chain._method.apply(obj, arguments));
-
-						if (chain._returns) {
-							return res;
-						}
-
-						var newChain = chain;
-						if (chain._dynamic) {
-							newChain = res;
-						}
-
-						return applyPrototype(obj, newChain, root);
-					};
-				};
-			} else if (chain._getter instanceof Function) {
-				if (chain._dynamic && chain._returns !== undefined) {
-					throw new Error('cannot define _returns if _dynamic is true');
-				}
-
-				getter = function () {
-					var res = assertNoReturn(obj, chain, 'getter',
-							chain._getter.call(obj));
-
-					if (chain._returns) {
-						return res;
-					}
-
-					var newChain = chain;
-					if (chain._dynamic) {
-						newChain = res;
-					}
-
-					return applyPrototype(obj, newChain, root);
-				};
-			} else {
-				if (chain._returns !== undefined) {
-					throw new Error('cannot specify _returns without _getter or _method');
-				}
-
-				if (chain._dynamic !== undefined) {
-					throw new Error('cannot specify _dynamic without _getter or _method');
-				}
-
-				getter = function () {
-					return applyPrototype(obj, chain, root);
-				};
-			}
-
-			Object.defineProperty(dummy, k, {
-				enumerable: true,
-				get: getter
-			});
-		})(k, structure[k]);
+		Object.defineProperty(dummy, k, {
+			enumerable: true,
+			get: getter
+		});
 	}
 
 	return found ? dummy : applyPrototype(obj, root, null);
