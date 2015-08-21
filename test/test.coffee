@@ -92,11 +92,17 @@ describe 'DynamicProp', ->
   structure =
     _constructor: (@arr)-> @a = []
     util:
+      _alias: 'utility'
       _dynamic: yes
       _getter: -> wrapArray @arr
 
   DynamicProp = eloquent structure
   DynamicProp.noThrow = true # coffee-script returns by default
+
+  structure.util._alias = ['utility']
+
+  DynamicProp2 = eloquent structure
+  DynamicProp2.noThrow = true # coffee-script returns by default
 
   it 'should gracefully handle empty dynamic chains', ->
     (should (DynamicProp []).util.util.util).be.ok()
@@ -105,3 +111,12 @@ describe 'DynamicProp', ->
     (should (DynamicProp ['foo']).util.foo).be.ok()
     (should (DynamicProp ['qux', 'qix']).util.qux).be.ok()
     (should (DynamicProp ['qux', 'qix']).util.qux.util.qix).be.ok()
+
+  it 'should honor aliases (singular)', ->
+    (should (DynamicProp2 ['foo']).util.foo).be.ok()
+    (should (DynamicProp2 ['foo']).utility.foo).be.ok()
+
+  it 'should honor aliases (array)', ->
+    (should (DynamicProp ['foo']).util.foo).be.ok()
+    (should (DynamicProp ['foo']).utility.foo).be.ok()
+    (should (DynamicProp ['foo', 'bar']).utility.foo.util.bar).be.ok()

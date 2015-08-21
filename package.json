@@ -17,7 +17,8 @@
   "xo": {
     "rules": {
       "no-invalid-this": 0,
-      "no-loop-func": 0
+      "no-loop-func": 0,
+      "no-nested-ternary": 0
     }
   },
   "repository": {

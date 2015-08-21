@@ -59,15 +59,27 @@ function applyPrototype(obj, structure, root) {
 			continue;
 		}
 
+		var chain = structure[k];
+
 		found = true;
 		root = root || structure;
 
 		var getter = resolveGetter(obj, root, structure[k]);
 
-		Object.defineProperty(dummy, k, {
-			enumerable: true,
-			get: getter
-		});
+		var names = chain._alias
+			? Array.isArray(chain._alias)
+				? chain._alias.slice()
+				: [chain._alias]
+			: [];
+
+		names.unshift(k);
+
+		for (var i = 0, len = names.length; i < len; i++) {
+			Object.defineProperty(dummy, names[i], {
+				enumerable: true,
+				get: getter
+			});
+		}
 	}
 
 	return found ? dummy : applyPrototype(obj, root, null);
