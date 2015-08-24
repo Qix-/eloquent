@@ -120,3 +120,29 @@ describe 'DynamicProp', ->
     (should (DynamicProp ['foo']).util.foo).be.ok()
     (should (DynamicProp ['foo']).utility.foo).be.ok()
     (should (DynamicProp ['foo', 'bar']).utility.foo.util.bar).be.ok()
+
+describe 'OwnThis', ->
+  structure =
+    _constructor: ->
+      @foo = 1234
+    add: _method: (n)-> @foo += n
+    addTo: _method: (prop, n)-> @[prop] += n
+    obj:
+      _getter: -> @
+      _returns: yes
+
+  OwnThis = eloquent structure
+  OwnThis.noThrow = true
+  OwnThis.new = no
+
+  it 'should use the this obj', ->
+    o = {}
+    (should (OwnThis o).obj).equal o
+
+  it 'should pass existing state', ->
+    o = bar: 1234
+    (should (OwnThis o).obj.bar).equal 1234
+    (should (OwnThis o).bar).equal 1234
+    (should ((OwnThis o).add 10).obj.bar).equal 1234
+    (should ((OwnThis o).add 10).bar).equal 1234
+    (should ((OwnThis o).add 10).foo).equal 1244

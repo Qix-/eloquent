@@ -93,10 +93,21 @@ module.exports = function eloquent(structure) {
 			throw new Error('eloquent structures cannot be instantiated directly');
 		}
 
-		var obj = {constructor: constructor};
+		var args = [].slice.call(arguments);
+		var obj = {};
+
+		if (constructor.new === false) {
+			obj = args.shift();
+		}
+
+		Object.defineProperty(obj, 'constructor', {
+			configurable: true,
+			writable: true,
+			value: constructor
+		});
 
 		if (structure._constructor instanceof Function) {
-			structure._constructor.apply(obj, arguments);
+			structure._constructor.apply(obj, args);
 		}
 
 		return applyPrototype(obj, structure);
