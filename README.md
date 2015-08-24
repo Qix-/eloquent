@@ -62,6 +62,17 @@ console.log(Signaler().signal.hasFlag()); //-> true
 console.log(Signaler().util.signalIf(true).status); //-> true
 ```
 
+## To-Do
+Some things that still need to be done
+
+- [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)ing out the
+  implementation
+- Review/revise the underscore-prefix API (as suggested by
+  [Sindre Sorhus](/sindresorhus))
+- Add better ability to mix dynamic properties with non-dynamic properties
+- Performance increases (static prototype buildup at creation of Eloquent
+  structure, etc.)
+
 ## License
 Licensed under the [MIT License](http://opensource.org/licenses/MIT).
 You can find a copy of it in [LICENSE](LICENSE).
