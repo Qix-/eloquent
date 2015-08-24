@@ -20,7 +20,7 @@ function applyGetter(obj, root, chain, type, args) {
 	var newChain = chain;
 	if (chain._dynamic) {
 		check.assertNotHybrid(isHybrid, 'be _dynamic');
-		newChain = res;
+		newChain = res || newChain;
 	}
 
 	var dummy = null;
@@ -45,7 +45,7 @@ function applySetter(obj, root, chain, v) {
 
 	var newChain = chain;
 	if (chain._dynamic) {
-		newChain = res;
+		newChain = res || newChain;
 	}
 
 	return applyPrototype(obj, newChain, root);
