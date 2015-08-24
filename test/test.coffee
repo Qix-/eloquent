@@ -155,6 +155,7 @@ describe 'Lighting', ->
       _method: (n)-> @level += Math.max 0, n - 1
     value:
       _getter: -> @level
+      _setter: (@level)->
       _returns: yes
 
   Lighting = eloquent structure
@@ -171,3 +172,16 @@ describe 'Lighting', ->
     Lighting().lighter(3).lighter.lighter(5).value.should.equal 9
     Lighting().lighter.lighter.lighter(3).lighter.lighter(2).lighter
       .lighter(15).lighter(10).lighter.lighter.lighter.value.should.equal 37
+
+  it 'should set the value', ->
+    l = Lighting()
+    l.value.should.equal 0
+    l.lighter.value.should.equal 1
+    l.value.should.equal 1
+    l.value = 15
+    l.value.should.equal 15
+    l.lighter.value.should.equal 16
+    l.lighter.value = 50
+    l.value.should.equal 50
+    l.lighter(100).value = 150
+    l.value.should.equal 150

@@ -33,6 +33,24 @@ function applyGetter(obj, root, chain, type, args) {
 	return applyPrototype(obj, newChain, root, dummy);
 }
 
+function applySetter(obj, root, chain, v) {
+	check.dynamicReturns(chain);
+
+	var res = check.assertNoReturn(obj, chain, 'setter',
+			chain._setter.call(obj, v));
+
+	if (chain._returns) {
+		return res;
+	}
+
+	var newChain = chain;
+	if (chain._dynamic) {
+		newChain = res;
+	}
+
+	return applyPrototype(obj, newChain, root);
+}
+
 function resolveGetter(obj, root, chain) {
 	if (check.isGetter(chain)) {
 		return function () {
@@ -54,6 +72,16 @@ function resolveGetter(obj, root, chain) {
 	};
 }
 
+function resolveSetter(obj, root, chain) {
+	if (check.isSetter(chain)) {
+		return function (v) {
+			return applySetter(obj, root, chain, v);
+		};
+	}
+
+	return undefined;
+}
+
 function applyPrototype(obj, structure, root, dummySrc) {
 	if (!structure) {
 		return obj;
@@ -73,6 +101,7 @@ function applyPrototype(obj, structure, root, dummySrc) {
 		root = root || structure;
 
 		var getter = resolveGetter(obj, root, structure[k]);
+		var setter = resolveSetter(obj, root, structure[k]);
 
 		var names = chain._alias
 			? Array.isArray(chain._alias)
@@ -85,7 +114,8 @@ function applyPrototype(obj, structure, root, dummySrc) {
 		for (var i = 0, len = names.length; i < len; i++) {
 			Object.defineProperty(dummy, names[i], {
 				enumerable: true,
-				get: getter
+				get: getter,
+				set: setter
 			});
 		}
 	}
