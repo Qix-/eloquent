@@ -5,6 +5,8 @@ var cloneObject = require('clone-object');
 var check = require('./lib/checks.js');
 
 function applyGetter(obj, root, chain, type, args) {
+	check.dynamicReturns(chain);
+
 	var res = check.assertNoReturn(obj, chain, type,
 			chain['_' + type].apply(obj, args));
 
@@ -33,14 +35,10 @@ function applyGetter(obj, root, chain, type, args) {
 
 function resolveGetter(obj, root, chain) {
 	if (check.isGetter(chain)) {
-		check.dynamicReturns(chain);
-
 		return function () {
 			return applyGetter(obj, root, chain, 'getter');
 		};
 	} else if (check.isMethod(chain)) {
-		check.dynamicReturns(chain);
-
 		return function () {
 			return function () {
 				return applyGetter(obj, root, chain, 'method', arguments);
