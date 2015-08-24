@@ -146,3 +146,28 @@ describe 'OwnThis', ->
     (should ((OwnThis o).add 10).obj.bar).equal 1234
     (should ((OwnThis o).add 10).bar).equal 1234
     (should ((OwnThis o).add 10).foo).equal 1244
+
+describe 'Lighting', ->
+  structure =
+    _constructor: -> @level = 0
+    lighter:
+      _getter: -> @level += 1
+      _method: (n)-> @level += Math.max 0, n - 1
+    value:
+      _getter: -> @level
+      _returns: yes
+
+  Lighting = eloquent structure
+  Lighting.noThrow = true
+
+  it 'should increment', ->
+    Lighting().value.should.equal 0
+    Lighting().lighter.value.should.equal 1
+    Lighting().lighter.lighter.value.should.equal 2
+
+  it 'should adjust when method is called', ->
+    Lighting().lighter(2).value.should.equal 2
+    Lighting().lighter(2).lighter.value.should.equal 3
+    Lighting().lighter(3).lighter.lighter(5).value.should.equal 9
+    Lighting().lighter.lighter.lighter(3).lighter.lighter(2).lighter
+      .lighter(15).lighter(10).lighter.lighter.lighter.value.should.equal 37

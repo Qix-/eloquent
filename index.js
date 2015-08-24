@@ -8,33 +8,43 @@ function applyGetter(obj, root, chain, type, args) {
 	var res = check.assertNoReturn(obj, chain, type,
 			chain['_' + type].apply(obj, args));
 
+	var isHybrid = check.isMethod(chain) && check.isGetter(chain);
+
 	if (chain._returns) {
+		check.assertNotHybrid(isHybrid, 'specify _returns');
 		return res;
 	}
 
 	var newChain = chain;
 	if (chain._dynamic) {
+		check.assertNotHybrid(isHybrid, 'be _dynamic');
 		newChain = res;
 	}
 
-	return applyPrototype(obj, newChain, root);
+	var dummy = null;
+	if (isHybrid) {
+		dummy = function () {
+			return applyGetter(obj, root, chain, 'method', arguments);
+		};
+	}
+
+	return applyPrototype(obj, newChain, root, dummy);
 }
 
 function resolveGetter(obj, root, chain) {
-	if (check.isMethod(chain)) {
-		check.isNotGetter(chain);
+	if (check.isGetter(chain)) {
+		check.dynamicReturns(chain);
+
+		return function () {
+			return applyGetter(obj, root, chain, 'getter');
+		};
+	} else if (check.isMethod(chain)) {
 		check.dynamicReturns(chain);
 
 		return function () {
 			return function () {
 				return applyGetter(obj, root, chain, 'method', arguments);
 			};
-		};
-	} else if (check.isGetter(chain)) {
-		check.dynamicReturns(chain);
-
-		return function () {
-			return applyGetter(obj, root, chain, 'getter');
 		};
 	}
 
@@ -46,12 +56,12 @@ function resolveGetter(obj, root, chain) {
 	};
 }
 
-function applyPrototype(obj, structure, root) {
+function applyPrototype(obj, structure, root, dummySrc) {
 	if (!structure) {
 		return obj;
 	}
 	root = root === undefined ? structure : root;
-	var dummy = cloneObject(obj);
+	var dummy = dummySrc || cloneObject(obj);
 
 	var found = false;
 	for (var k in structure) {
@@ -82,7 +92,7 @@ function applyPrototype(obj, structure, root) {
 		}
 	}
 
-	return found ? dummy : applyPrototype(obj, root, null);
+	return found ? dummy : applyPrototype(obj, root, null, dummySrc);
 }
 
 module.exports = function eloquent(structure) {
